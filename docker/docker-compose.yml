@@ -4,5 +4,14 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     ports:
-      - "8080:80"
+      - "3000:3000"
+    volumes:
+      - rsvp_data:/data
+    environment:
+      - DATA_DIR=/data
+      - BODY_SIZE_LIMIT=52428800   # 50 MB upload limit
+      - PORT=3000
     restart: unless-stopped
+
+volumes:
+  rsvp_data:

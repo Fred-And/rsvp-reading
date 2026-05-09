@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# SvelteKit
+.svelte-kit
+build
+
+# App data (SQLite DB + uploaded EPUBs)
+data/
