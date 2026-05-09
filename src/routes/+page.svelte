@@ -141,12 +141,16 @@
   .library {
     max-width: 600px;
     margin: 0 auto;
-    padding: 0 0 100px;
+    padding: 0 0 calc(env(safe-area-inset-bottom, 0px) + 100px);
     min-height: 100dvh;
   }
 
   .lib-header {
-    padding: 1.25rem 1.25rem 0.75rem;
+    padding:
+      calc(env(safe-area-inset-top, 0px) + 1.25rem)
+      calc(env(safe-area-inset-right, 0px) + 1.25rem)
+      0.75rem
+      calc(env(safe-area-inset-left, 0px) + 1.25rem);
     position: sticky;
     top: 0;
     background: #000;
@@ -310,8 +314,8 @@
   /* FAB */
   .fab {
     position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 1.5rem);
+    right: calc(env(safe-area-inset-right, 0px) + 1.5rem);
     width: 56px;
     height: 56px;
     border-radius: 50%;

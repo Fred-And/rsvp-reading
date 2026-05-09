@@ -434,13 +434,23 @@
     background-color: #000;
     color: #fff;
     font-family: 'Segoe UI', system-ui, sans-serif;
-    padding: 1rem 1.5rem 1.5rem;
+    padding:
+      calc(env(safe-area-inset-top, 0px) + 1rem)
+      calc(env(safe-area-inset-right, 0px) + 1.5rem)
+      calc(env(safe-area-inset-bottom, 0px) + 1.5rem)
+      calc(env(safe-area-inset-left, 0px) + 1.5rem);
     box-sizing: border-box;
     transition: padding 0.3s ease;
     overflow: hidden;
   }
 
-  main.focus-mode { padding: 1rem; }
+  main.focus-mode {
+    padding:
+      calc(env(safe-area-inset-top, 0px) + 0.5rem)
+      calc(env(safe-area-inset-right, 0px) + 1rem)
+      calc(env(safe-area-inset-bottom, 0px) + 0.5rem)
+      calc(env(safe-area-inset-left, 0px) + 1rem);
+  }
 
   header {
     display: flex;
