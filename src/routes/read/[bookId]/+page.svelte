@@ -50,6 +50,8 @@
   $: progress = words.length > 0 ? (currentWordIndex / words.length) * 100 : 0;
   $: currentWord = words[currentWordIndex - 1] || (words.length > 0 ? words[0] : '');
   $: wordFrame = extractWordFrame(words, Math.max(0, currentWordIndex - 1), frameWordCount);
+  $: prevWord = words[currentWordIndex - 2] ?? '';
+  $: nextWord = words[currentWordIndex] ?? '';
   $: timeRemaining = formatTimeRemaining(words.length - currentWordIndex, wordsPerMinute);
   $: isFocusMode = isPlaying || isPaused;
 
@@ -339,6 +341,8 @@
       {fadeDuration}
       {fadeEnabled}
       multiWordEnabled={frameWordCount > 1}
+      {prevWord}
+      {nextWord}
     />
   </div>
 

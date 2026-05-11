@@ -8,11 +8,22 @@
   export let fadeDuration = 150;
   export let fadeEnabled = true;
   export let multiWordEnabled = false;
+  export let prevWord = '';
+  export let nextWord = '';
 
   $: useMultiMode = multiWordEnabled && wordGroup.length > 0;
 
   // Get the current word (either from single mode or the highlighted word in group)
   $: currentWord = useMultiMode ? (wordGroup[highlightIndex] || '') : word;
+
+  $: fontSize = (() => {
+    if (useMultiMode) return null;
+    const len = currentWord.length;
+    if (len <= 6)  return 'clamp(3rem, 8vw, 6rem)';
+    if (len <= 10) return 'clamp(2.2rem, 6vw, 4.5rem)';
+    if (len <= 15) return 'clamp(1.6rem, 4.5vw, 3.2rem)';
+    return 'clamp(1.2rem, 3.5vw, 2.5rem)';
+  })();
 
   // Always calculate ORP for the current word
   $: orpIdx = currentWord ? getActualORPIndex(currentWord) : -1;
@@ -29,6 +40,13 @@
 </script>
 
 <div class="rsvp-display">
+  {#if !useMultiMode && prevWord}
+    <div class="context-neighbor prev">{prevWord}</div>
+  {/if}
+  {#if !useMultiMode && nextWord}
+    <div class="context-neighbor next">{nextWord}</div>
+  {/if}
+
   <div class="focus-marker">
     <div class="marker-line top"></div>
     <div class="marker-line bottom"></div>
@@ -37,7 +55,7 @@
   <div
     class="word-container"
     class:multi-mode={useMultiMode}
-    style="opacity: {opacity}; transition: opacity {fadeEnabled ? fadeDuration : 0}ms ease-in-out;"
+    style="opacity: {opacity}; transition: opacity {fadeEnabled ? fadeDuration : 0}ms ease-in-out;{fontSize ? ` font-size: ${fontSize};` : ''}"
   >
     {#if currentWord}
       <!-- ORP letter always centered at 50% -->
@@ -166,6 +184,24 @@
     color: #fff;
     text-align: left;
   }
+
+  .context-neighbor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', 'Menlo', 'Consolas', monospace;
+    font-size: clamp(0.9rem, 2.5vw, 1.4rem);
+    color: #2a2a2a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .context-neighbor.prev { top: 20%; }
+  .context-neighbor.next { bottom: 20%; }
 
   .placeholder {
     color: #333;
