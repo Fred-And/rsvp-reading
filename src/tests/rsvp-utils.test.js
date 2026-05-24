@@ -339,9 +339,9 @@ describe('shouldPauseAtWord', () => {
 describe('extractWordFrame', () => {
   const words = ['one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten']
 
-  it('should show one previous word, the current word, and the next three words', () => {
-    const result = extractWordFrame(words, 5, 5)
-    expect(result.subset).toEqual(['five', 'six', 'seven', 'eight', 'nine'])
+  it('should show one previous word, the current word, and the next two words', () => {
+    const result = extractWordFrame(words, 5, 4)
+    expect(result.subset).toEqual(['five', 'six', 'seven', 'eight'])
     expect(result.centerOffset).toBe(1)
   })
 
@@ -357,10 +357,10 @@ describe('extractWordFrame', () => {
     expect(result.centerOffset).toBe(1)
   })
 
-  it('should handle frame size of 1', () => {
+  it('should treat frame size 1 as the horizontal context minimum', () => {
     const result = extractWordFrame(words, 5, 1)
-    expect(result.subset).toEqual(['six'])
-    expect(result.centerOffset).toBe(0)
+    expect(result.subset).toEqual(['five', 'six', 'seven', 'eight'])
+    expect(result.centerOffset).toBe(1)
   })
 
   it('should handle center index beyond array length', () => {

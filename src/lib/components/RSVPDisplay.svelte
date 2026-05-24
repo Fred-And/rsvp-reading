@@ -8,8 +8,6 @@
   export let fadeDuration = 150;
   export let fadeEnabled = true;
   export let multiWordEnabled = false;
-  export let prevWord = '';
-  export let nextWord = '';
 
   $: useMultiMode = multiWordEnabled && wordGroup.length > 0;
 
@@ -40,13 +38,6 @@
 </script>
 
 <div class="rsvp-display">
-  {#if !useMultiMode && prevWord}
-    <div class="context-neighbor prev">{prevWord}</div>
-  {/if}
-  {#if !useMultiMode && nextWord}
-    <div class="context-neighbor next">{nextWord}</div>
-  {/if}
-
   <div class="focus-marker">
     <div class="marker-line top"></div>
     <div class="marker-line bottom"></div>
@@ -207,24 +198,6 @@
     color: #fff;
     text-align: left;
   }
-
-  .context-neighbor {
-    position: absolute;
-    left: 0;
-    right: 0;
-    text-align: center;
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', 'Menlo', 'Consolas', monospace;
-    font-size: clamp(0.9rem, 2.5vw, 1.4rem);
-    color: #2a2a2a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    pointer-events: none;
-    z-index: 1;
-  }
-
-  .context-neighbor.prev { top: 20%; }
-  .context-neighbor.next { bottom: 20%; }
 
   .placeholder {
     color: #333;

@@ -165,12 +165,13 @@ export function shouldPauseAtWord(wordIndex, pauseAfterWords) {
  * @returns {{ subset: string[], centerOffset: number }}
  */
 export function extractWordFrame(allWords, centerIdx, frameSize) {
-  if (frameSize <= 1 || centerIdx >= allWords.length) {
+  if (centerIdx >= allWords.length) {
     return { subset: [allWords[centerIdx] || ""], centerOffset: 0 };
   }
 
+  const visibleFrameSize = Math.max(4, frameSize);
   const previousWordCount = Math.min(1, centerIdx);
-  const nextWordCount = Math.max(0, frameSize - previousWordCount - 1);
+  const nextWordCount = Math.max(0, visibleFrameSize - previousWordCount - 1);
   const leftBound = Math.max(0, centerIdx - previousWordCount);
   const rightBound = Math.min(allWords.length, centerIdx + nextWordCount + 1);
 

@@ -26,7 +26,7 @@
   let showJumpTo = false;
   let jumpToValue = '';
   let showChapters = false;
-  let frameWordCount = 5;
+  let frameWordCount = 4;
 
   // Settings (restore from saved session or defaults)
   const s = data.savedSettings ?? {};
@@ -38,7 +38,7 @@
   let pauseOnPunctuation    = s.pauseOnPunctuation    ?? true;
   let punctuationPauseMultiplier = s.punctuationPauseMultiplier ?? 2;
   let wordLengthWPMMultiplier    = s.wordLengthWPMMultiplier    ?? 5;
-  frameWordCount = s.frameWordCount ?? 5;
+  frameWordCount = Math.max(4, s.frameWordCount ?? 4);
 
   // Animation
   let wordOpacity = 1;
@@ -50,8 +50,6 @@
   $: progress = words.length > 0 ? (currentWordIndex / words.length) * 100 : 0;
   $: currentWord = words[currentWordIndex - 1] || (words.length > 0 ? words[0] : '');
   $: wordFrame = extractWordFrame(words, Math.max(0, currentWordIndex - 1), frameWordCount);
-  $: prevWord = words[currentWordIndex - 2] ?? '';
-  $: nextWord = words[currentWordIndex] ?? '';
   $: timeRemaining = formatTimeRemaining(words.length - currentWordIndex, wordsPerMinute);
   $: isFocusMode = isPlaying || isPaused;
 
@@ -340,9 +338,7 @@
       opacity={wordOpacity}
       {fadeDuration}
       {fadeEnabled}
-      multiWordEnabled={frameWordCount > 1}
-      {prevWord}
-      {nextWord}
+      multiWordEnabled={true}
     />
   </div>
 
