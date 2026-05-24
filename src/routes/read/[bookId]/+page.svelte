@@ -26,7 +26,7 @@
   let showJumpTo = false;
   let jumpToValue = '';
   let showChapters = false;
-  let frameWordCount = 1;
+  let frameWordCount = 5;
 
   // Settings (restore from saved session or defaults)
   const s = data.savedSettings ?? {};
@@ -38,7 +38,7 @@
   let pauseOnPunctuation    = s.pauseOnPunctuation    ?? true;
   let punctuationPauseMultiplier = s.punctuationPauseMultiplier ?? 2;
   let wordLengthWPMMultiplier    = s.wordLengthWPMMultiplier    ?? 5;
-  frameWordCount = s.frameWordCount ?? 1;
+  frameWordCount = s.frameWordCount ?? 5;
 
   // Animation
   let wordOpacity = 1;

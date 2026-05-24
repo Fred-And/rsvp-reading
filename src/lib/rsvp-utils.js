@@ -154,10 +154,14 @@ export function shouldPauseAtWord(wordIndex, pauseAfterWords) {
 }
 
 /**
- * Extract a subset of words centered on current position
+ * Extract a horizontal reading frame around the current word.
+ *
+ * The frame favors forward context: one previous word, the current word,
+ * and as many upcoming words as the frame size allows.
+ *
  * @param {string[]} allWords - Complete word array
- * @param {number} centerIdx - Index to center on
- * @param {number} frameSize - Total words to display (odd numbers recommended)
+ * @param {number} centerIdx - Current word index
+ * @param {number} frameSize - Total words to display
  * @returns {{ subset: string[], centerOffset: number }}
  */
 export function extractWordFrame(allWords, centerIdx, frameSize) {
@@ -165,9 +169,10 @@ export function extractWordFrame(allWords, centerIdx, frameSize) {
     return { subset: [allWords[centerIdx] || ""], centerOffset: 0 };
   }
 
-  const radius = Math.floor(frameSize / 2);
-  const leftBound = Math.max(0, centerIdx - radius);
-  const rightBound = Math.min(allWords.length, centerIdx + radius + 1);
+  const previousWordCount = Math.min(1, centerIdx);
+  const nextWordCount = Math.max(0, frameSize - previousWordCount - 1);
+  const leftBound = Math.max(0, centerIdx - previousWordCount);
+  const rightBound = Math.min(allWords.length, centerIdx + nextWordCount + 1);
 
   const subset = allWords.slice(leftBound, rightBound);
   const centerOffset = centerIdx - leftBound;

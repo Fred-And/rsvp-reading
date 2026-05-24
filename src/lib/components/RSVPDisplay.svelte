@@ -110,26 +110,49 @@
     left: 50%;
     transform: translateX(-50%);
     height: 100%;
-    width: 3px;
+    width: 8px;
     pointer-events: none;
     z-index: 10;
   }
 
   .marker-line {
     position: absolute;
-    left: 0;
+    left: 50%;
+    transform: translateX(-50%);
     width: 100%;
-    height: 50px;
+    height: 74px;
+    filter: drop-shadow(0 0 10px rgba(255, 36, 36, 0.95));
   }
 
   .marker-line.top {
     top: 0;
-    background: linear-gradient(to bottom, #ff4444, transparent);
+    background: linear-gradient(to bottom, #ff1f1f 0%, rgba(255, 31, 31, 0.9) 35%, transparent 100%);
   }
 
   .marker-line.bottom {
     bottom: 0;
-    background: linear-gradient(to top, #ff4444, transparent);
+    background: linear-gradient(to top, #ff1f1f 0%, rgba(255, 31, 31, 0.9) 35%, transparent 100%);
+  }
+
+  .marker-line::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 13px solid transparent;
+    border-right: 13px solid transparent;
+  }
+
+  .marker-line.top::after {
+    top: 0;
+    border-top: 22px solid #ff1f1f;
+  }
+
+  .marker-line.bottom::after {
+    bottom: 0;
+    border-bottom: 22px solid #ff1f1f;
   }
 
   .word-container {

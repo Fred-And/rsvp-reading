@@ -8,7 +8,7 @@
   export let punctuationPauseMultiplier = 2;
   export let pauseAfterWords = 0;
   export let pauseDuration = 500;
-  export let frameWordCount = 1;
+  export let frameWordCount = 5;
   export let wordLengthWPMMultiplier = 5;
 
   const dispatch = createEventDispatcher();
@@ -90,7 +90,7 @@
         <span class="control-value">{frameWordCount}</span>
       </div>
       <input type="range" min="1" max="7" step="2" bind:value={frameWordCount} class="slider">
-      <p class="hint-text">Odd numbers (1, 3, 5, 7) center the highlight best</p>
+      <p class="hint-text">5 shows one previous word, the current word, and the next three words</p>
     </div>
   </section>
 
