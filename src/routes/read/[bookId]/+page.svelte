@@ -9,6 +9,7 @@
     extractWordFrame
   } from '$lib/rsvp-utils.js';
   import RSVPDisplay from '$lib/components/RSVPDisplay.svelte';
+  import PageTextView from '$lib/components/PageTextView.svelte';
   import Controls from '$lib/components/Controls.svelte';
   import Settings from '$lib/components/Settings.svelte';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
@@ -26,6 +27,7 @@
   let showJumpTo = false;
   let jumpToValue = '';
   let showChapters = false;
+  let readerMode = 'page';
   let frameWordCount = 4;
 
   // Settings (restore from saved session or defaults)
@@ -98,6 +100,7 @@
 
   function start() {
     if (words.length === 0) return;
+    readerMode = 'rsvp';
     isPlaying = true;
     isPaused = false;
     showSettings = false;
@@ -181,6 +184,21 @@
 
   function handleProgressClick(e) {
     currentWordIndex = Math.max(0, Math.min(words.length, Math.floor((e.detail.percentage / 100) * words.length)));
+  }
+
+  function switchReaderMode(mode) {
+    readerMode = mode;
+    showSettings = false;
+    showJumpTo = false;
+  }
+
+  function handlePageStart(e) {
+    const wordIndex = Math.max(1, Math.min(words.length, e.detail.wordIndex));
+    const wasPlaying = isPlaying;
+    if (isPlaying) { clearTimeout(intervalId); isPlaying = false; }
+    currentWordIndex = wordIndex;
+    readerMode = 'rsvp';
+    if (wasPlaying) { isPlaying = true; scheduleNextWord(); }
   }
 
   // ─── Session persistence ──────────────────────────────────────────────────
@@ -278,6 +296,21 @@
         {/if}
       </div>
 
+      <div class="reader-mode-switch" role="group" aria-label="Reader mode">
+        <button
+          type="button"
+          class:active={readerMode === 'page'}
+          aria-pressed={readerMode === 'page'}
+          on:click={() => switchReaderMode('page')}
+        >Page view</button>
+        <button
+          type="button"
+          class:active={readerMode === 'rsvp'}
+          aria-pressed={readerMode === 'rsvp'}
+          on:click={() => switchReaderMode('rsvp')}
+        >RSVP view</button>
+      </div>
+
       <div class="header-actions">
         <button class="icon-btn" on:click={() => { showJumpTo = !showJumpTo; showSettings = false; }} title="Jump (G)" class:active={showJumpTo}>
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z"/></svg>
@@ -330,16 +363,20 @@
   {/if}
 
   <!-- Main display -->
-  <div class="display-area">
-    <RSVPDisplay
-      word={currentWord}
-      wordGroup={wordFrame.subset}
-      highlightIndex={wordFrame.centerOffset}
-      opacity={wordOpacity}
-      {fadeDuration}
-      {fadeEnabled}
-      multiWordEnabled={true}
-    />
+  <div class="display-area" class:page-mode={readerMode === 'page'}>
+    {#if readerMode === 'page'}
+      <PageTextView {words} {currentWordIndex} on:start={handlePageStart} />
+    {:else}
+      <RSVPDisplay
+        word={currentWord}
+        wordGroup={wordFrame.subset}
+        highlightIndex={wordFrame.centerOffset}
+        opacity={wordOpacity}
+        {fadeDuration}
+        {fadeEnabled}
+        multiWordEnabled={true}
+      />
+    {/if}
   </div>
 
   <!-- Bottom bar -->
@@ -502,6 +539,38 @@
     flex-shrink: 0;
   }
 
+  .reader-mode-switch {
+    display: flex;
+    flex-shrink: 0;
+    gap: 0.2rem;
+    padding: 0.2rem;
+    border: 1px solid #1f1f1f;
+    border-radius: 999px;
+    background: #090909;
+  }
+
+  .reader-mode-switch button {
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: #666;
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 0.35rem 0.65rem;
+    transition: all 0.15s ease;
+  }
+
+  .reader-mode-switch button.active {
+    background: #ff4444;
+    color: #fff;
+  }
+
+  .reader-mode-switch button:not(.active):hover,
+  .reader-mode-switch button:not(.active):focus-visible {
+    color: #ddd;
+    outline: none;
+  }
+
   .back-btn { margin-right: 0.25rem; }
 
   .icon-btn {
@@ -528,6 +597,10 @@
     justify-content: center;
     min-height: 0;
     overflow: hidden;
+  }
+
+  .display-area.page-mode {
+    align-items: stretch;
   }
 
   .bottom-bar {

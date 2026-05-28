@@ -49,6 +49,7 @@
     style="opacity: {opacity}; transition: opacity {fadeEnabled ? fadeDuration : 0}ms ease-in-out;{fontSize ? ` font-size: ${fontSize};` : ''}"
   >
     {#if currentWord}
+      <span class="sr-only">{currentWord}</span>
       <!-- ORP letter always centered at 50% -->
       <span class="orp">{focusChar}</span>
 
@@ -171,6 +172,18 @@
   .context-words {
     color: #666;
     font-weight: 400;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
   }
 
   .orp {
