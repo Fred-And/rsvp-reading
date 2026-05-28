@@ -180,3 +180,61 @@ export function extractWordFrame(allWords, centerIdx, frameSize) {
 
   return { subset, centerOffset };
 }
+
+/**
+ * Build page ranges from EPUB page marks, falling back to synthetic pages when
+ * a book does not contain a real EPUB page-list.
+ *
+ * @param {number} totalWords
+ * @param {{label?: string, word_start?: number}[]} pageMarks
+ * @param {number} fallbackWordsPerPage
+ * @returns {{label: string, start: number, end: number, source: 'epub'|'synthetic'}[]}
+ */
+export function buildPageRanges(totalWords, pageMarks = [], fallbackWordsPerPage = 350) {
+  const safeTotal = Math.max(0, Number(totalWords) || 0);
+  if (safeTotal === 0) return [];
+
+  const cleanMarks = (Array.isArray(pageMarks) ? pageMarks : [])
+    .map((mark) => ({
+      label: String(mark?.label ?? ''),
+      start: Math.max(0, Math.min(safeTotal, Number(mark?.word_start) || 0))
+    }))
+    .filter((mark) => mark.start < safeTotal)
+    .sort((a, b) => a.start - b.start)
+    .filter((mark, index, marks) => index === 0 || mark.start !== marks[index - 1].start);
+
+  if (cleanMarks.length > 0) {
+    return cleanMarks.map((mark, index) => ({
+      label: mark.label || String(index + 1),
+      start: mark.start,
+      end: index + 1 < cleanMarks.length ? cleanMarks[index + 1].start : safeTotal,
+      source: 'epub'
+    })).filter((range) => range.end > range.start);
+  }
+
+  const pageSize = Math.max(1, Number(fallbackWordsPerPage) || 350);
+  const ranges = [];
+  for (let start = 0, pageNumber = 1; start < safeTotal; start += pageSize, pageNumber++) {
+    ranges.push({
+      label: String(pageNumber),
+      start,
+      end: Math.min(safeTotal, start + pageSize),
+      source: 'synthetic'
+    });
+  }
+  return ranges;
+}
+
+/**
+ * Find the page containing a one-based currentWordIndex.
+ * @param {{start: number, end: number}[]} ranges
+ * @param {number} currentWordIndex
+ * @returns {number}
+ */
+export function getCurrentPageIndex(ranges, currentWordIndex) {
+  if (!Array.isArray(ranges) || ranges.length === 0) return 0;
+  const zeroBasedWord = Math.max(0, (Number(currentWordIndex) || 1) - 1);
+  const idx = ranges.findIndex((range) => zeroBasedWord >= range.start && zeroBasedWord < range.end);
+  if (idx !== -1) return idx;
+  return zeroBasedWord >= ranges[ranges.length - 1].end ? ranges.length - 1 : 0;
+}

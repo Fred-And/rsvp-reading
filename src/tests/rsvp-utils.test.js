@@ -7,7 +7,9 @@ import {
   formatTimeRemaining,
   splitWordForDisplay,
   shouldPauseAtWord,
-  extractWordFrame
+  extractWordFrame,
+  buildPageRanges,
+  getCurrentPageIndex
 } from '../lib/rsvp-utils.js'
 
 describe('parseText', () => {
@@ -273,6 +275,47 @@ describe('formatTimeRemaining', () => {
 
   it('should handle negative remaining words', () => {
     expect(formatTimeRemaining(-10, 300)).toBe('0:00')
+  })
+})
+
+describe('buildPageRanges', () => {
+  it('uses EPUB page marks to create precise inclusive/exclusive word ranges', () => {
+    const ranges = buildPageRanges(1200, [
+      { label: '1', word_start: 0 },
+      { label: '2', word_start: 350 },
+      { label: '3', word_start: 780 }
+    ])
+
+    expect(ranges).toEqual([
+      { label: '1', start: 0, end: 350, source: 'epub' },
+      { label: '2', start: 350, end: 780, source: 'epub' },
+      { label: '3', start: 780, end: 1200, source: 'epub' }
+    ])
+  })
+
+  it('falls back to stable synthetic pages when an EPUB has no page list', () => {
+    const ranges = buildPageRanges(805, [], 400)
+
+    expect(ranges).toEqual([
+      { label: '1', start: 0, end: 400, source: 'synthetic' },
+      { label: '2', start: 400, end: 800, source: 'synthetic' },
+      { label: '3', start: 800, end: 805, source: 'synthetic' }
+    ])
+  })
+})
+
+describe('getCurrentPageIndex', () => {
+  it('maps the current word number to the page containing it', () => {
+    const ranges = [
+      { label: '1', start: 0, end: 350, source: 'epub' },
+      { label: '2', start: 350, end: 780, source: 'epub' },
+      { label: '3', start: 780, end: 1200, source: 'epub' }
+    ]
+
+    expect(getCurrentPageIndex(ranges, 1)).toBe(0)
+    expect(getCurrentPageIndex(ranges, 350)).toBe(0)
+    expect(getCurrentPageIndex(ranges, 351)).toBe(1)
+    expect(getCurrentPageIndex(ranges, 1200)).toBe(2)
   })
 })
 

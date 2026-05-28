@@ -5,7 +5,7 @@ import { readFileSync } from 'fs';
 /**
  * Parse an EPUB file and return title, author, full extracted text, and chapters.
  * @param {string} filePath
- * @returns {Promise<{title:string, author:string|null, fullText:string, totalWords:number, chapters:Array}>}
+ * @returns {Promise<{title:string, author:string|null, fullText:string, totalWords:number, chapters:any[], pages:any[], cover?:{buffer: Buffer, mime: string}|null}>}
  */
 export async function parseEPUBFile(filePath) {
   const data = readFileSync(filePath);
@@ -44,13 +44,15 @@ export async function parseEPUBFile(filePath) {
     if (idref) spineIds.push(idref);
   });
 
-  // 3. Collect chapter titles from NCX or nav
+  // 3. Collect chapter titles and EPUB page-list entries from NCX or nav
   const chapterTitlesByHref = await extractChapterTitlesByHref(zip, opfDir, manifest, $opf);
+  const pageRefs = await extractPageRefs(zip, opfDir, manifest, $opf);
 
   // 4. Extract text per spine item
   let wordOffset = 0;
   const textParts = [];
   const chapters = [];
+  const pages = [];
 
   for (let i = 0; i < spineIds.length; i++) {
     const href = manifest[spineIds[i]];
@@ -89,6 +91,17 @@ export async function parseEPUBFile(filePath) {
       word_end: wordEnd,
       chapter_order: chapters.length
     });
+
+    for (const pageRef of pageRefs) {
+      if (!hrefMatches(pageRef.fileHref, href)) continue;
+      const localOffset = countWordsBeforeAnchor($html, pageRef.fragment);
+      const pageWordStart = Math.max(wordStart, Math.min(wordEnd - 1, wordStart + localOffset));
+      pages.push({
+        label: pageRef.label || String(pages.length + 1),
+        word_start: pageWordStart,
+        page_order: pages.length
+      });
+    }
   }
 
   const fullText = textParts.join(' ').replace(/\s+/g, ' ').trim();
@@ -96,7 +109,7 @@ export async function parseEPUBFile(filePath) {
 
   const cover = await extractCover(zip, opfDir, manifest, $opf);
 
-  return { title, author, fullText, totalWords, chapters, cover };
+  return { title, author, fullText, totalWords, chapters, pages, cover };
 }
 
 /**
@@ -152,6 +165,97 @@ async function extractChapterTitlesByHref(zip, opfDir, manifest, $opf) {
   }
 
   return titles;
+}
+
+/**
+ * Extract EPUB page-list references from EPUB2 NCX or EPUB3 nav documents.
+ * Not every EPUB includes this; callers should fall back to synthetic pages.
+ */
+async function extractPageRefs(zip, opfDir, manifest, $opf) {
+  const refs = [];
+
+  const addRef = (label, src) => {
+    if (!src) return;
+    const [fileHref, fragment = ''] = src.split('#');
+    refs.push({
+      label: String(label || refs.length + 1).trim(),
+      fileHref: normalizeHref(fileHref),
+      fragment: decodeURIComponent(fragment || '')
+    });
+  };
+
+  // EPUB2: <pageList><pageTarget><navLabel><text>…</text></navLabel><content src="…"/>
+  const ncxId = $opf('spine').attr('toc');
+  if (ncxId && manifest[ncxId]) {
+    try {
+      const ncxFile = resolveZipFile(zip, opfDir, manifest[ncxId]);
+      if (ncxFile) {
+        const ncxXml = await ncxFile.async('string');
+        const $ncx = load(ncxXml, { xmlMode: true });
+        $ncx('pageList pageTarget').each((_, el) => {
+          addRef($ncx(el).find('navLabel text').first().text(), $ncx(el).find('content').attr('src'));
+        });
+      }
+    } catch {}
+  }
+
+  // EPUB3: <nav epub:type="page-list"><ol><li><a href="…">12</a>
+  const navHrefs = Object.values(manifest).filter(
+    (h) => String(h).includes('nav') || String(h).endsWith('toc.xhtml')
+  );
+  for (const navHref of navHrefs) {
+    try {
+      const navFile = resolveZipFile(zip, opfDir, navHref);
+      if (!navFile) continue;
+      const navHtml = await navFile.async('string');
+      const $nav = load(navHtml);
+      $nav('nav[epub\\:type="page-list"] a, nav[type="page-list"] a').each((_, el) => {
+        addRef($nav(el).text(), $nav(el).attr('href'));
+      });
+      if (refs.length > 0) break;
+    } catch {}
+  }
+
+  return refs
+    .filter((ref) => ref.fileHref)
+    .filter((ref, index, all) => all.findIndex((candidate) => (
+      candidate.fileHref === ref.fileHref && candidate.fragment === ref.fragment
+    )) === index);
+}
+
+function hrefMatches(pageHref, spineHref) {
+  const page = normalizeHref(pageHref);
+  const spine = normalizeHref(spineHref);
+  return page === spine || page.split('/').pop() === spine.split('/').pop();
+}
+
+function normalizeHref(href) {
+  return decodeURIComponent(String(href || '')).replace(/^\.\//, '');
+}
+
+function countWordsBeforeAnchor($html, anchor) {
+  if (!anchor) return 0;
+  const textParts = [];
+  let found = false;
+
+  function walk(node) {
+    if (found || !node) return;
+    if (node.attribs && (node.attribs.id === anchor || node.attribs.name === anchor)) {
+      found = true;
+      return;
+    }
+    if (node.type === 'text') {
+      textParts.push(node.data || '');
+      return;
+    }
+    if (Array.isArray(node.children)) {
+      for (const child of node.children) walk(child);
+    }
+  }
+
+  $html('body').contents().each((_, node) => walk(node));
+  if (!found) return 0;
+  return textParts.join(' ').trim().split(/\s+/).filter(Boolean).length;
 }
 
 /**

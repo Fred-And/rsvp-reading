@@ -43,6 +43,14 @@ export function initDB() {
       chapter_order INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS pages (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      book_id    INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+      label      TEXT    NOT NULL,
+      word_start INTEGER NOT NULL,
+      page_order INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS book_texts (
       book_id INTEGER PRIMARY KEY REFERENCES books(id) ON DELETE CASCADE,
       content TEXT    NOT NULL
@@ -91,6 +99,19 @@ export function insertChapters(bookId, chapters) {
   insertMany(chapters);
 }
 
+export function insertPages(bookId, pages) {
+  if (!Array.isArray(pages) || pages.length === 0) return;
+  const db = getDB();
+  const stmt = db.prepare(
+    `INSERT INTO pages (book_id, label, word_start, page_order)
+     VALUES (?, ?, ?, ?)`
+  );
+  const insertMany = db.transaction((items) => {
+    for (const p of items) stmt.run(bookId, p.label, p.word_start, p.page_order);
+  });
+  insertMany(pages);
+}
+
 export function insertBookText(bookId, content) {
   getDB()
     .prepare('INSERT INTO book_texts (book_id, content) VALUES (?, ?)')
@@ -122,6 +143,12 @@ export function getBookText(bookId) {
 export function getChapters(bookId) {
   return getDB()
     .prepare('SELECT * FROM chapters WHERE book_id = ? ORDER BY chapter_order')
+    .all(bookId);
+}
+
+export function getPages(bookId) {
+  return getDB()
+    .prepare('SELECT label, word_start FROM pages WHERE book_id = ? ORDER BY page_order')
     .all(bookId);
 }
 

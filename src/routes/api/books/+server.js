@@ -5,6 +5,7 @@ import { parseEPUBFile } from '$lib/server/epub-parser.js';
 import {
   insertBook,
   insertChapters,
+  insertPages,
   insertBookText,
   updateBookCover,
   listBooks,
@@ -36,12 +37,13 @@ export async function POST({ request }) {
     throw error(422, `Failed to parse EPUB: ${e.message}`);
   }
 
-  const { title, author, fullText, totalWords, chapters, cover } = parsed;
+  const { title, author, fullText, totalWords, chapters, pages = [], cover } = parsed;
 
   const bookId = Number(insertBook({ title, author, filename: file.name, filePath, totalWords }));
 
   insertBookText(bookId, fullText);
   insertChapters(bookId, chapters);
+  insertPages(bookId, pages);
 
   // Save cover image if found
   if (cover) {

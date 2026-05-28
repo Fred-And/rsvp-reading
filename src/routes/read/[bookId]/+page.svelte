@@ -6,7 +6,9 @@
     getWordDelay as getWordDelayUtil,
     formatTimeRemaining,
     shouldPauseAtWord,
-    extractWordFrame
+    extractWordFrame,
+    buildPageRanges,
+    getCurrentPageIndex
   } from '$lib/rsvp-utils.js';
   import RSVPDisplay from '$lib/components/RSVPDisplay.svelte';
   import PageTextView from '$lib/components/PageTextView.svelte';
@@ -17,7 +19,7 @@
 
   export let data;
 
-  const { book, words, chapters } = data;
+  const { book, words, chapters, pages = [] } = data;
 
   // ─── State ────────────────────────────────────────────────────────────────
   let currentWordIndex = data.savedWord ?? 0;
@@ -54,6 +56,8 @@
   $: wordFrame = extractWordFrame(words, Math.max(0, currentWordIndex - 1), frameWordCount);
   $: timeRemaining = formatTimeRemaining(words.length - currentWordIndex, wordsPerMinute);
   $: isFocusMode = isPlaying || isPaused;
+  $: pageRanges = buildPageRanges(words.length, pages);
+  $: currentPageIndex = getCurrentPageIndex(pageRanges, currentWordIndex);
 
   $: currentChapterIndex = (() => {
     if (!chapters.length) return 0;
@@ -199,6 +203,12 @@
     currentWordIndex = wordIndex;
     readerMode = 'rsvp';
     if (wasPlaying) { isPlaying = true; scheduleNextWord(); }
+  }
+
+  function handlePageChange(e) {
+    const targetPage = pageRanges[e.detail.pageIndex];
+    if (!targetPage) return;
+    jumpToWordIndex(Math.max(1, targetPage.start + 1));
   }
 
   // ─── Session persistence ──────────────────────────────────────────────────
@@ -365,7 +375,14 @@
   <!-- Main display -->
   <div class="display-area" class:page-mode={readerMode === 'page'}>
     {#if readerMode === 'page'}
-      <PageTextView {words} {currentWordIndex} on:start={handlePageStart} />
+      <PageTextView
+        {words}
+        {currentWordIndex}
+        {pageRanges}
+        {currentPageIndex}
+        on:start={handlePageStart}
+        on:pagechange={handlePageChange}
+      />
     {:else}
       <RSVPDisplay
         word={currentWord}

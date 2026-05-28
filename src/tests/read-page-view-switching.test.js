@@ -18,6 +18,7 @@ function readerData(overrides = {}) {
     book: { id: 1, title: 'Test Book', author: 'Tester', totalWords: words.length },
     words,
     chapters: [],
+    pages: [],
     savedWord: 0,
     savedSettings: null,
     ...overrides
@@ -66,5 +67,28 @@ describe('reader page/e-reader and RSVP mode switching', () => {
     await fireEvent.click(screen.getByRole('button', { name: /page view/i }))
 
     expect(screen.getByTestId('page-word-5')).toHaveClass('current')
+  })
+
+  it('paginates page view using EPUB page marks and navigates by page', async () => {
+    render(ReaderPage, {
+      props: {
+        data: readerData({
+          pages: [
+            { label: '1', word_start: 0 },
+            { label: '2', word_start: 4 }
+          ]
+        })
+      }
+    })
+
+    expect(screen.getByTestId('page-text-view')).toHaveTextContent('Alpha bravo charlie delta')
+    expect(screen.getByTestId('page-text-view')).not.toHaveTextContent('echo foxtrot')
+    expect(screen.getByText('Page 1 of 2')).toBeInTheDocument()
+
+    await fireEvent.click(screen.getByRole('button', { name: /next page/i }))
+
+    expect(screen.getByTestId('page-text-view')).toHaveTextContent('echo foxtrot golf hotel')
+    expect(screen.getByTestId('page-text-view')).not.toHaveTextContent('Alpha bravo')
+    expect(screen.getByText('Page 2 of 2')).toBeInTheDocument()
   })
 })
