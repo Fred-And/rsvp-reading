@@ -798,10 +798,31 @@
   .quick-jumps button:active { background: #333; color: #fff; }
 
   @media (max-width: 600px) {
-    main { padding: 0.75rem 1rem 1rem; }
-    main.focus-mode { padding: 0.5rem; }
+    main {
+      padding:
+        calc(env(safe-area-inset-top, 0px) + 0.75rem)
+        calc(env(safe-area-inset-right, 0px) + 1rem)
+        calc(env(safe-area-inset-bottom, 0px) + 1rem)
+        calc(env(safe-area-inset-left, 0px) + 1rem);
+    }
+
+    main.focus-mode {
+      padding:
+        calc(env(safe-area-inset-top, 0px) + 0.5rem)
+        calc(env(safe-area-inset-right, 0px) + 0.5rem)
+        calc(env(safe-area-inset-bottom, 0px) + 0.5rem)
+        calc(env(safe-area-inset-left, 0px) + 0.5rem);
+    }
+
     .desktop-only { display: none; }
     .mobile-only { display: flex; }
-    .panel-overlay { padding: 1rem; }
+
+    .panel-overlay {
+      padding:
+        calc(env(safe-area-inset-top, 0px) + 1rem)
+        calc(env(safe-area-inset-right, 0px) + 1rem)
+        calc(env(safe-area-inset-bottom, 0px) + 1rem)
+        calc(env(safe-area-inset-left, 0px) + 1rem);
+    }
   }
 </style>
